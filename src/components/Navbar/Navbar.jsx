@@ -55,6 +55,9 @@ const NavBar = () => {
       if (response.ok) {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        localStorage.removeItem('token');
+        localStorage.removeItem('favorites');
         logout();
         setShowLogoutModal(false);
       } else {
