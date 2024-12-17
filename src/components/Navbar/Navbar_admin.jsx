@@ -16,7 +16,9 @@ const Navbar_admin = () => {
   const { isLoggedIn, logout } = useContext(AuthContext);
   const { favorites } = useContext(FavoritesContext);
   const userId = localStorage.getItem('userId');
-  console.log(userId)
+  // console.log(userId)
+  const navigate = useNavigate();
+
 
 
   const fetchUsername = async () => {
@@ -55,7 +57,7 @@ const Navbar_admin = () => {
       await new Promise(resolve => setTimeout(resolve, 500)); // Delay for 500ms
       localStorage.clear();
       sessionStorage.clear();
-      logout();
+      // logout();
       setShowLogoutModal(false);
       navigate('/login');
       toast.success('Logged out successfully!');

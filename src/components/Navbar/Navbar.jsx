@@ -49,9 +49,9 @@ const NavBar = () => {
       await new Promise(resolve => setTimeout(resolve, 500)); // Delay for 500ms
       localStorage.clear();
       sessionStorage.clear();
-      logout();
+      // logout();
       setShowLogoutModal(false);
-      navigate('/login');
+      navigate('/login'); 
       toast.success('Logged out successfully!');
     } catch (error) {
       console.error('Error logging out:', error);
