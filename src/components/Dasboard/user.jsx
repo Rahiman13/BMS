@@ -42,15 +42,15 @@ const User = () => {
     const [paginationSize, setPaginationSize] = useState('large');
 
     useEffect(() => {
-        // toast.info('Fetching data, please wait. The backend is hosted on a free platform, so it might take a while.', {
-        //     position: "top-right",
-        //     autoClose: 5000,
-        //     hideProgressBar: false,
-        //     closeOnClick: true,
-        //     pauseOnHover: true,
-        //     draggable: true,
-        //     progress: undefined,
-        // });
+        toast.info('Fetching data, please wait. The backend is hosted on a free platform, so it might take a while.', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
 
         // Separate promise for books
         const loadBooks = async () => {
