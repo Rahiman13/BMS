@@ -82,137 +82,181 @@ const AddBooksForm = () => {
       <Navbar className="w-full lg:w-1/4" />
       <div className="container-fluid w-full mx-auto bg-cover bg-center h-auto bg-fixed relative" 
            style={{ backgroundImage: `url(${AddBooks_bg})` }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-purple-600/30 to-pink-600/30 animate-gradient-xy"></div>
+        <div className="absolute inset-0 bg-black/50"></div>
 
-        <div className="relative z-10 w-full lg:w-3/4 mx-auto p-8 lg:p-12">
-          <div className="text-center mb-12">
-            <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-text">
+        <div className="relative z-10 w-full lg:w-4/5 xl:w-3/4 mx-auto p-4 lg:p-12">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white">
               Add New Book
             </h1>
-            <p className="text-gray-300 text-lg">Expand your library with new titles</p>
+            <p className="text-gray-200 text-lg font-medium">Expand your library with new titles</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/20 shadow-[0_0_40px_rgba(192,219,255,0.2)] hover:shadow-[0_0_50px_rgba(192,219,255,0.3)] transition-all duration-500">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="bg-gray-900/90 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-gray-700 shadow-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 p-4 bg-gray-800/50 rounded-xl mb-6">
+                <h2 className="text-white text-xl font-semibold mb-4">Required Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-gray-200 font-medium">Book Title *</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={bookData.title}
+                      onChange={handleInputChange}
+                      placeholder="Enter book title"
+                      className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
+                               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                               transition-all duration-300"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-gray-200 font-medium">Author Name *</label>
+                    <input
+                      type="text"
+                      name="authorName"
+                      value={bookData.authorName}
+                      onChange={handleInputChange}
+                      placeholder="Enter author name"
+                      className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
+                               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                               transition-all duration-300"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-gray-300 text-sm ml-2">Book Title</label>
+                <label className="text-gray-200 font-medium">Publisher Name *</label>
                 <input
                   type="text"
-                  name="title"
-                  value={bookData.title}
+                  name="publisherName"
+                  value={bookData.publisherName}
                   onChange={handleInputChange}
-                  placeholder="Enter book title"
-                  className="w-full bg-white/5 border border-white/10 text-white placeholder-gray-400 p-4 rounded-2xl
+                  placeholder="Publisher Name"
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
                            focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                           transition-all duration-300 hover:bg-white/10 hover:border-purple-500/50"
+                           transition-all duration-300"
+                  required
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <label className="text-gray-300 text-sm ml-2">Author Name</label>
+                <label className="text-gray-200 font-medium">Genre</label>
                 <input
                   type="text"
-                  name="authorName"
-                  value={bookData.authorName}
+                  name="genre"
+                  value={bookData.genre}
                   onChange={handleInputChange}
-                  placeholder="Enter author name"
-                  className="w-full bg-white/5 border border-white/10 text-white placeholder-gray-400 p-4 rounded-2xl
+                  placeholder="Genre"
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
                            focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                           transition-all duration-300 hover:bg-white/10 hover:border-purple-500/50"
+                           transition-all duration-300"
                 />
               </div>
-              <input
-                type="text"
-                name="publisherName"
-                value={bookData.publisherName}
-                onChange={handleInputChange}
-                placeholder="Publisher Name"
-                className="bg-white/10 border-0 text-white placeholder-gray-400 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/20"
-              />
-              <input
-                type="text"
-                name="genre"
-                value={bookData.genre}
-                onChange={handleInputChange}
-                placeholder="Genre"
-                className="bg-white/10 border-0 text-white placeholder-gray-400 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/20"
-              />
-              <input
-                type="number"
-                name="price"
-                value={bookData.price}
-                onChange={handleInputChange}
-                placeholder="Price"
-                className="bg-white/10 border-0 text-white placeholder-gray-400 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/20"
-              />
-              <input
-                type="number"
-                name="totalCopies"
-                value={bookData.totalCopies}
-                onChange={handleInputChange}
-                placeholder="Total Copies"
-                className="bg-white/10 border-0 text-white placeholder-gray-400 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/20"
-              />
-              <input
-                type="text"
-                name="imageUrl"
-                value={bookData.imageUrl}
-                onChange={handleInputChange}
-                placeholder="Image URL"
-                className="bg-white/10 border-0 text-white placeholder-gray-400 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/20"
-              />
-              <input
-                type="number"
-                name="copiesAvailable"
-                value={bookData.copiesAvailable}
-                onChange={handleInputChange}
-                placeholder="Copies Available (Optional)"
-                className="bg-white/10 border-0 text-white placeholder-gray-400 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/20"
-              />
+
+              <div className="space-y-2">
+                <label className="text-gray-200 font-medium">Price</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={bookData.price}
+                  onChange={handleInputChange}
+                  placeholder="Price"
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                           transition-all duration-300"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-gray-200 font-medium">Total Copies</label>
+                <input
+                  type="number"
+                  name="totalCopies"
+                  value={bookData.totalCopies}
+                  onChange={handleInputChange}
+                  placeholder="Total Copies"
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                           transition-all duration-300"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-gray-200 font-medium">Image URL</label>
+                <input
+                  type="text"
+                  name="imageUrl"
+                  value={bookData.imageUrl}
+                  onChange={handleInputChange}
+                  placeholder="Image URL"
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                           transition-all duration-300"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-gray-200 font-medium">Copies Available (Optional)</label>
+                <input
+                  type="number"
+                  name="copiesAvailable"
+                  value={bookData.copiesAvailable}
+                  onChange={handleInputChange}
+                  placeholder="Copies Available (Optional)"
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-3 rounded-xl
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                           transition-all duration-300"
+                />
+              </div>
             </div>
 
-            <div className="mt-8 space-y-6">
+            <div className="md:col-span-2 space-y-6 mt-6">
               <div className="space-y-2">
-                <label className="text-gray-300 text-sm ml-2">Author Bio</label>
+                <label className="text-gray-200 font-medium">Author Bio</label>
                 <textarea
                   name="authorBio"
                   value={bookData.authorBio}
                   onChange={handleInputChange}
                   placeholder="Tell us about the author..."
-                  className="w-full bg-white/5 border border-white/10 text-white placeholder-gray-400 p-4 rounded-2xl
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-4 rounded-xl
                            focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                           transition-all duration-300 hover:bg-white/10 hover:border-purple-500/50 min-h-[120px]"
+                           transition-all duration-300 min-h-[120px] resize-y"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-gray-300 text-sm ml-2">Book Summary</label>
+                <label className="text-gray-200 font-medium">Book Summary</label>
                 <textarea
                   name="summary"
                   value={bookData.summary}
                   onChange={handleInputChange}
                   placeholder="Write a compelling summary..."
-                  className="w-full bg-white/5 border border-white/10 text-white placeholder-gray-400 p-4 rounded-2xl
+                  className="w-full bg-gray-800 border border-gray-600 text-white placeholder-gray-400 p-4 rounded-xl
                            focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                           transition-all duration-300 hover:bg-white/10 hover:border-purple-500/50 min-h-[120px]"
+                           transition-all duration-300 min-h-[120px] resize-y"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end mt-10">
+            <div className="flex justify-end mt-8">
               <button
                 onClick={handleAddBook}
-                className="group relative inline-flex items-center px-12 py-4 rounded-2xl
-                         bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
-                         text-white font-semibold text-lg tracking-wider
-                         transition-all duration-500 ease-in-out
-                         hover:scale-105 hover:shadow-[0_0_40px_rgba(167,139,250,0.5)]
+                className="group relative inline-flex items-center px-8 py-3 rounded-xl
+                         bg-gradient-to-r from-purple-600 to-purple-800
+                         text-white font-semibold text-lg
+                         transition-all duration-300
+                         hover:from-purple-700 hover:to-purple-900
                          focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900"
               >
                 <span className="relative">Add Book</span>
-                <span className="absolute right-4 transform group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
+                <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </button>
             </div>
           </div>

@@ -4,7 +4,10 @@ import { AuthContext } from './AuthContext';
 import { FavoritesContext } from '../pages/Favourite/FavoritesContext';
 import links from '../NavLinks/links_admin';
 import { FaBars } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import API_URL from '../../api';
+import axios from 'axios';
 
 const Navbar_admin = () => {
   const [open, setOpen] = useState(false);
@@ -14,6 +17,22 @@ const Navbar_admin = () => {
   const { favorites } = useContext(FavoritesContext);
   const userId = localStorage.getItem('userId');
   console.log(userId)
+
+
+  const fetchUsername = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      const response = await axios.get(`${API_URL}/api/users/${userId}`);
+      if (response.status === 200) {
+        setUsername(response.data.username);
+      }
+    } catch (error) {
+      console.error('Error fetching username:', error);
+    }
+  };
+
   
   useEffect(() => {
     if (isLoggedIn && userId) {
@@ -21,44 +40,28 @@ const Navbar_admin = () => {
     }
   }, [isLoggedIn, userId]);
 
-  const fetchUsername = async (userId) => {
-    try {
-      const response = await fetch(`${API_URL}/api/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      const data = await response.json();
-      setUsername(data.username);
-    } catch (error) {
-      console.error('Error fetching username:', error);
-    }
-  };
+  
+  // console.log('username', username);
 
   const handleLogout = () => {
+    fetchUsername();
     setShowLogoutModal(true);
   };
 
+  
+
   const handleLogoutConfirm = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (response.ok) {
-        localStorage.removeItem('userId')
-        localStorage.removeItem('authToken');
-        logout();
-        setShowLogoutModal(false);
-      } else {
-        console.error('Logout failed');
-      }
+      await new Promise(resolve => setTimeout(resolve, 500)); // Delay for 500ms
+      localStorage.clear();
+      sessionStorage.clear();
+      logout();
+      setShowLogoutModal(false);
+      navigate('/login');
+      toast.success('Logged out successfully!');
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Error logging out:', error);
+      toast.error('Failed to log out. Please try again.');
     }
   };
 
@@ -113,7 +116,7 @@ const Navbar_admin = () => {
           </ul>
         </div>
         <div className="w-full p-6">
-          {isLoggedIn ? (
+          {userId ? (
             <button
               onClick={handleLogout}
               className="w-full bg-white/10 text-white hover:bg-white hover:text-[#000080] transition-all duration-300 font-medium rounded-xl px-4 py-3 text-center backdrop-blur-sm border border-white/20 hover:border-white"
@@ -137,9 +140,7 @@ const Navbar_admin = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all">
             <p className="text-xl text-gray-800 mb-6">
-              Are you sure you want to logout, {' '}
-              <span className="font-cursive text-2xl text-[#000080]">{username}</span>?
-            </p>
+              Are you sure you want to logout, <span className="font-cursive text-2xl text-[#000080]">{username}</span>?</p>
             <div className="flex justify-end space-x-4">
               <NavLink to="/login">
                 <button
