@@ -74,7 +74,7 @@ const NavBar = () => {
   };
 
   return (
-    <nav className="bg-white dark:bg-[#000080] fixed w-full z-[999] top-0 start-0 border-b border-gray-200 dark:border-gray-600">
+    <nav className="bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-blue-950 via-indigo-900 to-blue-900 fixed w-full z-[999] top-0 start-0 border-b border-gray-200 dark:border-gray-600">
       <div className="max-w-screen-xl flex flex-wrap py-3 items-center justify-between mx-auto px-3">
         <div className="">
           <Link to="/" className="flex items-center overflow-x-hidden space-x-3 rtl:space-x-reverse">
