@@ -196,7 +196,7 @@ const User = () => {
             book.genre.toLowerCase().includes(searchTerm)
         );
         setFilteredBooks(filtered);
-        setCurrentPage(0);
+        setCurrentPage(1);
     };
 
     const isFavorite = (bookId) => favorites.some(book => book._id === bookId);
@@ -714,7 +714,7 @@ const User = () => {
                                     </div>
                                 </div>
                             ))
-                        ) : (
+                        ) : currentBooks.length > 0 ? (
                             currentBooks.map((book) => (
                                 <motion.div
                                     key={book._id}
@@ -742,7 +742,7 @@ const User = () => {
                                                 {book.summary}
                                             </p>
                                         </div>
-                                        <button
+                                        {/* <button
                                             className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm p-2 rounded-full text-red-500 hover:bg-white/40 transition-all duration-300 transform hover:scale-110"
                                             onClick={() => handleToggleFavorite(book)}
                                         >
@@ -750,7 +750,7 @@ const User = () => {
                                                 <BsHeartFill size={20} className="filter drop-shadow-lg" /> : 
                                                 <BsHeart size={20} className="filter drop-shadow-lg" />
                                             }
-                                        </button>
+                                        </button> */}
                                     </div>
 
                                     <div className="p-6 bg-gradient-to-b from-white to-gray-50">
@@ -794,24 +794,30 @@ const User = () => {
                                     </div>
                                 </motion.div>
                             ))
+                        ) : (
+                            <div className="col-span-full text-center py-8">
+                                <p className="text-gray-500 text-lg">No books found matching your search criteria.</p>
+                            </div>
                         )}
                     </div>
-                    {!loading && pageCount > 1 && (
-                        <ThemeProvider theme={theme}>
-                            <Stack spacing={2} className="flex justify-center my-8">
-                                <Pagination 
-                                    count={pageCount}
-                                    page={currentPage}
-                                    onChange={handlePageChange}
-                                    color="primary"
-                                    size={paginationSize}
-                                    showFirstButton 
-                                    showLastButton
-                                    siblingCount={window.innerWidth < 640 ? 0 : 1}
-                                    boundaryCount={window.innerWidth < 640 ? 0 : 1}
-                                />
-                            </Stack>
-                        </ThemeProvider>
+                    {!loading && filteredBooks.length > 0 && pageCount > 1 && (
+                        <div className="mt-12 mb-8 flex justify-end">
+                            <ThemeProvider theme={theme}>
+                                <Stack spacing={2} className="flex justify-center">
+                                    <Pagination 
+                                        count={pageCount}
+                                        page={currentPage}
+                                        onChange={handlePageChange}
+                                        color="primary"
+                                        size={paginationSize}
+                                        showFirstButton 
+                                        showLastButton
+                                        siblingCount={window.innerWidth < 640 ? 0 : 1}
+                                        boundaryCount={window.innerWidth < 640 ? 0 : 1}
+                                    />
+                                </Stack>
+                            </ThemeProvider>
+                        </div>
                     )}
                 </div>
                 <Services />
