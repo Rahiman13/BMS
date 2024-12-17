@@ -3,7 +3,7 @@ const links = [
   // { name: "Transportation", path: "/transportation" },
   // { name: "Budget", path: "/budget" },
   { name: "Books", path: "/" },
-  { name: "Favourites", path: "/favourites" },
+  // { name: "Favourites", path: "/favourites" },
   { name: "My Orders", path: "/myorders" },
 ];
 

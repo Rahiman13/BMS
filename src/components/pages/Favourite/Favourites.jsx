@@ -4,28 +4,12 @@ import Swal from 'sweetalert2';
 import Navbar from '../../Navbar/Navbar';
 import { BsHeartFill } from 'react-icons/bs';
 import axios from 'axios';
+import API_URL from '../../../api';
+import { useNavigate } from 'react-router-dom';
 
 const Favorites = () => {
     const { favorites, toggleFavorite } = useContext(FavoritesContext);
-    const [favoritesList, setFavoritesList] = useState([]);
-
-    useEffect(() => {
-        const fetchFavoriteBooks = async () => {
-            const favoriteIds = JSON.parse(localStorage.getItem('favorites')) || [];
-            if (favoriteIds.length > 0) {
-                try {
-                    const response = await axios.get(`https://books-adda-backend.onrender.com/books`);
-                    const allBooks = response.data;
-                    const favoriteBooks = allBooks.filter(book => favoriteIds.includes(book._id));
-                    setFavoritesList(favoriteBooks);
-                } catch (error) {
-                    console.error('Error fetching favorite books:', error);
-                }
-            }
-        };
-
-        fetchFavoriteBooks();
-    }, [favorites]);
+    const navigate = useNavigate();
 
     const handleViewMore = (book) => {
         Swal.fire({
@@ -49,25 +33,6 @@ const Favorites = () => {
             }
         });
     };
-
-    const fetchBooks = async () => {
-        try {
-            const response = await axios.get('https://books-adda-backend.onrender.com/books');
-            if (response.status === 200) {
-                const booksWithGenre = response.data.map(book => ({
-                    ...book,
-                    genre: book.genre.toLowerCase()
-                }));
-                setBooks(booksWithGenre);
-                setFilteredBooks(booksWithGenre);
-            } else {
-                console.error('Failed to fetch books data');
-            }
-        } catch (error) {
-            console.error('Error fetching books:', error);
-        }
-    };
-
 
     const handleBuy = async (book) => {
         const userId = localStorage.getItem('userId');
@@ -109,20 +74,19 @@ const Favorites = () => {
                     purchasedDate: new Date().toISOString(),
                 };
     
-                const response = await axios.post('https://books-adda-backend.onrender.com/purchase', purchaseData);
+                const response = await axios.post(`${API_URL}/api/purchase`, purchaseData);
     
                 if (response.status === 201) {
                     // Remove from favorites list if present
                     const isFavorite = favorites.some(fav => fav._id === book._id);
                     if (isFavorite) {
-                        const updatedFavoritesList = favoritesList.filter(fav => fav._id !== book._id);
-                        setFavoritesList(updatedFavoritesList);
+                        const updatedFavoritesList = favorites.filter(fav => fav._id !== book._id);
+                        setFavorites(updatedFavoritesList);
                         const favoriteIds = updatedFavoritesList.map(fav => fav._id);
                         localStorage.setItem('favorites', JSON.stringify(favoriteIds));
                     }
     
                     Swal.fire('Purchased!', `You have successfully purchased "${book.title}".`, 'success');
-                    fetchBooks();
                 } else {
                     Swal.fire('Error!', 'Failed to complete purchase', 'error');
                 }
@@ -132,14 +96,9 @@ const Favorites = () => {
             Swal.fire('Error!', 'Failed to complete purchase', 'error');
         }
     };
-    
-    const handleToggleFavorite = (book) => {
-        toggleFavorite(book);
-        const updatedFavoritesList = favoritesList.filter(fav => fav._id !== book._id);
-        setFavoritesList(updatedFavoritesList);
 
-        const favoriteIds = updatedFavoritesList.map(fav => fav._id);
-        localStorage.setItem('favorites', JSON.stringify(favoriteIds));
+    const handleToggleFavorite = async (book) => {
+        await toggleFavorite(book);
     };
 
     return (
@@ -150,14 +109,14 @@ const Favorites = () => {
                     My Favorite Books
                 </h1>
                 
-                {favoritesList.length === 0 ? (
+                {favorites.length === 0 ? (
                     <div className="text-center py-16">
                         <BsHeartFill className="mx-auto text-6xl text-gray-300 mb-4" />
                         <p className="text-xl text-gray-500">No favorite books yet. Start adding some!</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                        {favoritesList.map((book) => (
+                        {favorites.map((book) => (
                             <div key={book._id} className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                                 <div className="relative group">
                                     <img

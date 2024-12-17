@@ -1,6 +1,6 @@
 // src/App.js
 import React from "react";
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import './index.css';
 // import NavBar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
@@ -19,17 +19,22 @@ import Notifications from "./components/Navbar/Notifications";
 import User_charts from './components/Dasboard/charts/purchase_charts';
 import Gallery from "./components/Dasboard/gallery";
 
+
+
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 const App = () => {
   return (
-    <FavoritesProvider>
+    <BrowserRouter future={{ 
+      v7_startTransition: true,
+      v7_relativeSplatPath: true 
+    }}>
       <AuthProvider>
-        <Router>
+        <FavoritesProvider>
           {/* <NavBar /> */}
           <div className="bg-[#f3f3f3] w-full min-h-screen">
             <Routes>
-              {/* <Route path="/" element={<Home />} /> */}
-              {/* <Route path="/hotels" element={<Hotels />} /> */}
-              {/* <Route path="/transportation" element={<Transportation />} /> */}
               <Route path="/" element={<User_dasboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/favourites" element={<Favourites />} />
@@ -45,9 +50,21 @@ const App = () => {
             </Routes>
           </div>
           <FooterConditionally />
-        </Router>
+        </FavoritesProvider>
       </AuthProvider>
-    </FavoritesProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+    </BrowserRouter>
   );
 }
 

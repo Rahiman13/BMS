@@ -3,6 +3,8 @@ import Swal from 'sweetalert2';
 import AddBooks_bg from '../assets/AddBooks_bg.jpg';
 import './AddBooks.css';
 import Navbar from '../Navbar/Navbar_admin';
+import axios from 'axios';
+import API_URL from '../../api';
 
 const AddBooks = () => {
     const [formData, setFormData] = useState({
@@ -57,7 +59,7 @@ const AddBooks = () => {
 
         try {
             // Ensure publisher and author exist, and add book
-            const response = await fetch(`https://books-adda-backend.onrender.com/books`, {
+            const response = await fetch(`$API_URL}/api/books`, {
                 method: 'POST',
                 body: JSON.stringify(data),
                 headers: {

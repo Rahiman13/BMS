@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import axios from 'axios';
 import { Chart, ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+import API_URL from '../../../api';
 
 // Register the components
 Chart.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
@@ -14,9 +15,9 @@ const UserStats = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const activeResponse = await axios.get('https://books-adda-backend.onrender.com/users/active');
-        const frequentResponse = await axios.get('https://books-adda-backend.onrender.com/users/frequent');
-        const inactiveResponse = await axios.get('https://books-adda-backend.onrender.com/users/inactive');
+        const activeResponse = await axios.get(`${API_URL}/users/active`);
+        const frequentResponse = await axios.get(`${API_URL}/users/frequent`);
+        const inactiveResponse = await axios.get(`${API_URL}/users/inactive`);
 
         setActiveUsers(activeResponse.data.length);
         setFrequentUsers(frequentResponse.data.length);

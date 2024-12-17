@@ -4,6 +4,7 @@ import { AuthContext } from '../Navbar/AuthContext';
 import loginimg from '../assets/login_img.png';
 import Swal from 'sweetalert2';
 import Loader from './Loader'; // Import the Loader component
+import API_URL from '../../api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -51,57 +52,58 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      setLoading(true); // Set loading to true
+      setLoading(true);
 
-      setTimeout(async () => {
-        try {
-          const response = await fetch('https://books-adda-backend.onrender.com/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-          });
-          
-          const result = await response.json();
+      try {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        const result = await response.json();
+        console.log(result.user.id);
 
-          if (response.ok) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Signed in successfully',
-              toast: true,
-              position: 'top-end',
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true,
-              didOpen: (toast) => {
-                toast.onmouseenter = Swal.stopTimer;
-                toast.onmouseleave = Swal.resumeTimer;
-              }
-            });
+        if (response.ok) {
+          localStorage.setItem('userId', result.user.id);
+          localStorage.setItem('username', result.user.username);
+          localStorage.setItem('token', result.token);
 
-            localStorage.setItem('userId', result.userId);
-            login(); // Set the user as logged in
-
-            if (formData.email.endsWith('@numetry.com')) {
-              navigate('/admin');
-            } else {
-              navigate('/'); // Redirect to user dashboard
+          Swal.fire({
+            icon: 'success',
+            title: 'Signed in successfully',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
             }
+          });
+
+          login();
+
+          if (formData.email === 'rahimanshaik13@gmail.com') {
+            navigate('/add_books');
           } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'Oops...',
-              text: 'Something went wrong!',
-              footer: 'Please check your details and try again'
-            });
+            navigate('/');
           }
-        } catch (error) {
-          setServerError('Error submitting form. Please try again.');
-        } finally {
-          setLoading(false); // Set loading to false after 3 seconds
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: result.error || 'Invalid credentials',
+          });
         }
-      }, 3000); // 3-second delay
+      } catch (error) {
+        setServerError('Error submitting form. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import loginimg from '../assets/login_img.png';
 import Navbar from '../Navbar/Navbar';
 import Modal from 'react-modal';
+import API_URL from '../../api';
 
 Modal.setAppElement('#root'); // Set this if you use a root element
 
@@ -34,7 +35,7 @@ const Register = () => {
 
         // Determine the role based on email
         if (name === 'email') {
-            const role = value.endsWith('@numetry.com') ? 'admin' : 'user';
+            const role = value('rahimanshaik13@gmail.com') ? 'admin' : 'user';
             setFormData({ ...formData, [name]: value, role });
         }
     };
@@ -43,22 +44,22 @@ const Register = () => {
         let formIsValid = true;
         let errors = {};
 
-        // Name
-        if (!formData.name) {
+        // Name validation
+        if (!formData.name.trim()) {
             formIsValid = false;
             errors.name = 'Name cannot be empty';
         }
 
-        // Mobile
+        // Mobile validation
         if (!formData.mobile) {
             formIsValid = false;
             errors.mobile = 'Mobile number cannot be empty';
         } else if (!/^\d{10}$/.test(formData.mobile)) {
             formIsValid = false;
-            errors.mobile = 'Invalid mobile number';
+            errors.mobile = 'Invalid mobile number - must be 10 digits';
         }
 
-        // Email
+        // Email validation
         if (!formData.email) {
             formIsValid = false;
             errors.email = 'Email cannot be empty';
@@ -67,28 +68,31 @@ const Register = () => {
             errors.email = 'Invalid email address';
         }
 
-        // Username
+        // Username validation
         if (!formData.username) {
             formIsValid = false;
             errors.username = 'Username cannot be empty';
+        } else if (formData.username.length < 3) {
+            formIsValid = false;
+            errors.username = 'Username must be at least 3 characters long';
         }
 
-        // Password
+        // Password validation
         if (!formData.password) {
             formIsValid = false;
             errors.password = 'Password cannot be empty';
         } else if (
-            !/(?=.*[a-z])/.test(formData.password) || // at least one lowercase letter
-            !/(?=.*[A-Z])/.test(formData.password) || // at least one uppercase letter
-            !/(?=.*\d)/.test(formData.password) || // at least one number
-            !/(?=.*[@$!%*?&])/.test(formData.password) || // at least one special character
-            formData.password.length < 8 // at least 8 characters long
+            !/(?=.*[a-z])/.test(formData.password) || // lowercase
+            !/(?=.*[A-Z])/.test(formData.password) || // uppercase
+            !/(?=.*\d)/.test(formData.password) || // number
+            !/(?=.*[@$!%*?&])/.test(formData.password) || // special char
+            formData.password.length < 8
         ) {
             formIsValid = false;
-            errors.password = 'Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character';
+            errors.password = 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character';
         }
 
-        // Confirm Password
+        // Confirm Password validation
         if (formData.password !== formData.confirmPassword) {
             formIsValid = false;
             errors.confirmPassword = 'Passwords do not match';
@@ -140,7 +144,7 @@ const Register = () => {
 
     const verifyOtp = () => {
         if (otp === sentOtp) {
-            toast.success('OTP verified successfully.');
+            toast.success('OTP verified successfully');
             setShowModal(false);
             registerUser();
         } else {
@@ -150,23 +154,35 @@ const Register = () => {
 
     const registerUser = async () => {
         try {
-            const response = await fetch('https://books-adda-backend.onrender.com/register', {
+            const registrationData = {
+                name: formData.name,
+                mobile: formData.mobile,
+                email: formData.email,
+                username: formData.username,
+                password: formData.password,
+                role: formData.role
+            };
+
+            const response = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(registrationData),
             });
 
-            const result = await response.json();
+            const data = await response.json();
+            
             if (response.ok) {
                 toast.success('Registration successful');
                 navigate('/login');
             } else {
-                alert(result.error);
+                const errorMessage = data.error || 'Registration failed';
+                toast.error(errorMessage);
             }
         } catch (error) {
-            toast.success('Error submitting form');
+            console.error('Registration error:', error);
+            toast.error('Error during registration. Please try again.');
         }
     };
 

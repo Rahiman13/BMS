@@ -3,9 +3,13 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Navbar from '../Navbar/Navbar';
+import API_URL from '../../api';
+import { toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
+
 
 const MyOrders = () => {
-  const [aggregatedPurchases, setAggregatedPurchases] = useState([]);
+  const [purchases, setPurchases] = useState([]);
   const [deletingPurchaseId, setDeletingPurchaseId] = useState(null);
   const [address, setAddress] = useState({
     street: '',
@@ -18,56 +22,53 @@ const MyOrders = () => {
   const [addresses, setAddresses] = useState([]);
   const [editingAddress, setEditingAddress] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
+
+  const fetchAddresses = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      toast.error('Please login to view addresses');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/api/addresses/${userId}`);
+      if (response.status === 200) {
+        setAddresses(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      if (!error.response || error.response.status !== 404) {
+        toast.error('Failed to fetch addresses');
+      }
+    }
+  };
+  const fetchPurchases = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      toast.error('Please login to view your orders');
+      return;
+    }
+    try {
+      const response = await axios.get(`${API_URL}/api/purchases/${userId}`);
+      if (response.status === 200) {
+        const purchasesData = Array.isArray(response.data) ? response.data : [];
+        setPurchases(purchasesData);
+      }
+    } catch (error) {
+      console.error('Error fetching purchase data:', error);
+      toast.error('Failed to fetch orders');
+      setPurchases([]);
+    }
+  };
+  
+  
   useEffect(() => {
-    const fetchPurchases = async () => {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        alert('Login to see your orders');
-        return;
-      }
-      try {
-        const response = await axios.get(`https://books-adda-backend.onrender.com/purchase/${userId}`);
-        const purchases = response.data;
-
-        // Aggregate purchases by book title
-        const purchaseMap = purchases.reduce((acc, purchase) => {
-          if (acc[purchase.bookTitle]) {
-            acc[purchase.bookTitle].quantity += purchase.quantity;
-            acc[purchase.bookTitle].totalPrice += purchase.totalPrice;
-          } else {
-            acc[purchase.bookTitle] = {
-              ...purchase,
-              quantity: purchase.quantity,
-              totalPrice: purchase.totalPrice,
-            };
-          }
-          return acc;
-        }, {});
-
-        setAggregatedPurchases(Object.values(purchaseMap));
-      } catch (error) {
-        console.error('Error fetching purchase data:', error);
-      }
-    };
-
-    const fetchAddress = async () => {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        return;
-      }
-      try {
-        const response = await axios.get(`https://books-adda-backend.onrender.com/address/${userId}`);
-        if (response.status === 200) {
-          setAddresses(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching address:', error);
-      }
-    };
 
     fetchPurchases();
-    fetchAddress();
+    fetchAddresses();
   }, []);
 
   const MySwal = withReactContent(Swal);
@@ -86,10 +87,10 @@ const MyOrders = () => {
 
       if (result.isConfirmed) {
         // Make backend API call to delete purchase
-        await axios.delete(`https://books-adda-backend.onrender.com/purchase/${purchaseId}`);
+        await axios.delete(`${API_URL}/api/purchases/${purchaseId}`);
 
         // Update UI by filtering out the deleted purchase
-        setAggregatedPurchases(aggregatedPurchases.filter(purchase => purchase._id !== purchaseId));
+        setPurchases(purchases.filter(purchase => purchase._id !== purchaseId));
 
         MySwal.fire(
           'Deleted!',
@@ -129,18 +130,33 @@ const MyOrders = () => {
     e.preventDefault();
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      alert('Login to update your address');
+      toast.error('Please login to save address');
       return;
     }
+
     try {
+      const addressData = {
+        ...address,
+        userId: parseInt(userId)
+      };
+
       let response;
       if (editingAddress) {
-        response = await axios.put(`https://books-adda-backend.onrender.com/address/${editingAddress._id}`, { userId, ...address });
+        // Update existing address
+        response = await axios.put(
+          `${API_URL}/api/addresses/${editingAddress.id}`,
+          addressData
+        );
       } else {
-        response = await axios.post(`https://books-adda-backend.onrender.com/address`, { userId, ...address });
+        // Create new address
+        response = await axios.post(
+          `${API_URL}/api/addresses`,
+          addressData
+        );
       }
 
-      if (response.status === 201 || response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
+        toast.success(editingAddress ? 'Address updated successfully' : 'Address added successfully');
         setShowModal(false);
         setEditingAddress(null);
         setAddress({
@@ -151,41 +167,33 @@ const MyOrders = () => {
           postalCode: '',
           country: ''
         });
-
-        Swal.fire('Success', 'Address saved successfully', 'success');
-        const fetchAddress = await axios.get(`https://books-adda-backend.onrender.com/address/${userId}`);
-        setAddresses(fetchAddress.data);
-      } else {
-        Swal.fire('Error', 'Failed to save address', 'error');
+        fetchAddresses(); // Refresh addresses list silently
+      }
+      else {
+        toast.error('Failed to save address');
       }
     } catch (error) {
       console.error('Error saving address:', error);
-      Swal.fire('Error', 'An error occurred while saving your address', 'error');
+      toast.error('Failed to save address');
     }
   };
 
-  const handleEditAddress = (address) => {
-    setEditingAddress(address);
-    setAddress(address);
-    setShowModal(true);
-  };
-
-  const handleAddAddress = () => {
-    setEditingAddress(null);
+  const handleEditAddress = (addr) => {
+    setEditingAddress(addr);
     setAddress({
-      street: '',
-      landmark: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: ''
+      street: addr.street,
+      landmark: addr.landmark,
+      city: addr.city,
+      state: addr.state,
+      postalCode: addr.postalCode,
+      country: addr.country
     });
     setShowModal(true);
   };
 
   const handleDeleteAddress = async (addressId) => {
     try {
-      const result = await MySwal.fire({
+      const result = await Swal.fire({
         title: 'Are you sure?',
         text: 'You will not be able to recover this address!',
         icon: 'warning',
@@ -195,29 +203,82 @@ const MyOrders = () => {
       });
 
       if (result.isConfirmed) {
-        await axios.delete(`https://books-adda-backend.onrender.com/address/${addressId}`);
-        setAddresses(addresses.filter((addr) => addr._id !== addressId));
-
-        MySwal.fire(
-          'Deleted!',
-          'Your address has been deleted.',
-          'success'
-        );
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        MySwal.fire(
-          'Cancelled',
-          'Your address is safe :)',
-          'error'
-        );
+        const response = await axios.delete(`${API_URL}/api/addresses/${addressId}`);
+        if (response.status === 200) {
+          toast.success('Address deleted successfully');
+          await fetchAddresses(); // Refresh addresses list silently
+        }
       }
     } catch (error) {
       console.error('Error deleting address:', error);
-      MySwal.fire(
-        'Error!',
-        'An error occurred while deleting your address.',
-        'error'
-      );
+      toast.error('Failed to delete address');
     }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = purchases.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(purchases.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getPageNumbers = () => {
+    const maxButtons = 5; // Adjust this number to show more or fewer buttons
+    const pages = [];
+    
+    if (totalPages <= maxButtons) {
+      // If total pages is less than max buttons, show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      // Calculate start and end of current group
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(start + 2, totalPages - 1);
+      
+      // Adjust start if we're near the end
+      if (end === totalPages - 1) {
+        start = end - 2;
+      }
+      
+      // Add ellipsis if needed
+      if (start > 2) {
+        pages.push('...');
+      }
+      
+      // Add middle pages
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis if needed
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   return (
@@ -228,52 +289,59 @@ const MyOrders = () => {
           <h1 className="text-4xl font-bold mb-8 mt-20 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
             My Orders & Addresses
           </h1>
-          
+
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Address Section */}
             <div className="lg:w-1/3">
               <div className="backdrop-blur-sm bg-white/80 rounded-2xl shadow-xl p-6 border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-800">Addresses</h2>
-                  <button 
-                    onClick={handleAddAddress} 
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-full hover:shadow-lg transform hover:-translate-y-0.5 transition duration-200"
+                  <button
+                    onClick={() => {
+                      setEditingAddress(null);
+                      setAddress({
+                        street: '',
+                        landmark: '',
+                        city: '',
+                        state: '',
+                        postalCode: '',
+                        country: ''
+                      });
+                      setShowModal(true);
+                    }}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-full"
                   >
                     Add New
                   </button>
                 </div>
 
                 <div className="space-y-4">
-                  {addresses.length > 0 ? (
-                    addresses.map((addr, index) => (
-                      <div key={index} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition duration-200">
-                        <div className="space-y-2">
-                          <p className="font-medium text-gray-800">{addr.street}</p>
-                          <p className="text-gray-600 text-sm">{addr.landmark}</p>
-                          <p className="text-gray-600 text-sm">
-                            {addr.city}, {addr.state} {addr.postalCode}
-                          </p>
-                          <p className="text-gray-600 text-sm">{addr.country}</p>
-                        </div>
-                        <div className="flex gap-2 mt-4">
-                          <button 
-                            onClick={() => handleEditAddress(addr)} 
-                            className="flex-1 bg-amber-500 text-white px-3 py-1.5 rounded-full text-sm hover:bg-amber-600 transition duration-200"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteAddress(addr._id)} 
-                            className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm hover:bg-red-600 transition duration-200"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                  {addresses.map((addr) => (
+                    <div key={addr.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                      <div className="space-y-2">
+                        <p className="font-medium text-gray-800">{addr.street}</p>
+                        <p className="text-gray-600 text-sm">{addr.landmark}</p>
+                        <p className="text-gray-600 text-sm">
+                          {addr.city}, {addr.state} {addr.postalCode}
+                        </p>
+                        <p className="text-gray-600 text-sm">{addr.country}</p>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-gray-500 py-4">No addresses found</p>
-                  )}
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={() => handleEditAddress(addr)}
+                          className="flex-1 bg-amber-500 text-white px-3 py-1.5 rounded-full text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAddress(addr.id)}
+                          className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -281,14 +349,35 @@ const MyOrders = () => {
             {/* Orders Section */}
             <div className="lg:w-2/3">
               <div className="space-y-6">
-                {aggregatedPurchases.map((purchase) => (
+                {/* Add items per page selector */}
+                <div className="flex justify-end items-center gap-2 mb-4">
+                  <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+                    Items per page:
+                  </label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={handleItemsPerPageChange}
+                    className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                  </select>
+                  <span className="text-sm text-gray-500">
+                    Showing {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, purchases.length)} of {purchases.length} items
+                  </span>
+                </div>
+
+                {currentItems.map((purchase) => (
                   <div key={purchase._id} className="backdrop-blur-sm bg-white/80 rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition duration-300">
                     <div className="p-6 flex gap-6">
                       <div className="flex-shrink-0">
-                        <img 
-                          src={purchase.bookimageUrl} 
-                          alt={purchase.bookTitle} 
-                          className="w-40 h-48 object-cover rounded-lg shadow-md hover:scale-105 transition duration-300" 
+                        <img
+                          src={purchase.bookimageUrl}
+                          alt={purchase.bookTitle}
+                          className="w-40 h-48 object-cover rounded-lg shadow-md hover:scale-105 transition duration-300"
                         />
                       </div>
                       <div className="flex-1 space-y-4">
@@ -296,7 +385,7 @@ const MyOrders = () => {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="bg-gray-50 rounded-lg p-3">
                             <p className="text-sm text-gray-500">Purchase Date</p>
-                            <p className="font-medium">{new Date(purchase.purchasedDate).toLocaleDateString()}</p>
+                            <p className="font-medium">{new Date(purchase.createdAt).toLocaleDateString()}</p>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
                             <p className="text-sm text-gray-500">Quantity</p>
@@ -311,6 +400,58 @@ const MyOrders = () => {
                     </div>
                   </div>
                 ))}
+                
+                {purchases.length > itemsPerPage && (
+                  <div className="flex justify-center items-center space-x-2 mt-8">
+                    <button
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-4 py-2 rounded-lg ${
+                        currentPage === 1
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    
+                    {getPageNumbers().map((page, index) => (
+                      <button
+                        key={index}
+                        onClick={() => typeof page === 'number' ? paginate(page) : null}
+                        className={`px-4 py-2 rounded-lg ${
+                          page === currentPage
+                            ? 'bg-blue-500 text-white'
+                            : page === '...'
+                            ? 'bg-gray-100 text-gray-500 cursor-default'
+                            : 'bg-gray-200 hover:bg-gray-300'
+                        }`}
+                        disabled={page === '...'}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    
+                    <button
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-4 py-2 rounded-lg ${
+                        currentPage === totalPages
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+
+                {/* Show message when no purchases */}
+                {purchases.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-lg">No orders found</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -410,6 +551,7 @@ const MyOrders = () => {
           </div>
         </div>
       )}
+
     </>
   );
 };

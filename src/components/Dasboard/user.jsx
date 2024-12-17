@@ -20,8 +20,11 @@ import Gallery from './gallery';
 import Testimonials from './testimonials';
 import emailjs from 'emailjs-com';
 import AddressModal from './AddressModal';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
+import API_URL from '../../api';
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const User = () => {
     const [books, setBooks] = useState([]);
@@ -29,24 +32,25 @@ const User = () => {
     const [filteredBooks, setFilteredBooks] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
-    const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 8;
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(8);
     const [userData, setUserData] = useState({});
     const [addresses, setAddresses] = useState([]);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [selectedBook, setSelectedBook] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [paginationSize, setPaginationSize] = useState('large');
 
     useEffect(() => {
-        toast.info('Fetching data, please wait. The backend is hosted on a free platform, so it might take a while.', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-        });
+        // toast.info('Fetching data, please wait. The backend is hosted on a free platform, so it might take a while.', {
+        //     position: "top-right",
+        //     autoClose: 5000,
+        //     hideProgressBar: false,
+        //     closeOnClick: true,
+        //     pauseOnHover: true,
+        //     draggable: true,
+        //     progress: undefined,
+        // });
 
         // Separate promise for books
         const loadBooks = async () => {
@@ -77,9 +81,19 @@ const User = () => {
         }
     }, []);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setPaginationSize(window.innerWidth < 640 ? 'small' : 'large');
+        };
+
+        handleResize(); // Initial size
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const fetchBooks = async () => {
         try {
-            const response = await axios.get('https://books-adda-backend.onrender.com/books');
+            const response = await axios.get(`${API_URL}/api/books`);
             if (response.status === 200) {
                 const booksWithGenre = response.data.map(book => ({
                     ...book,
@@ -98,7 +112,7 @@ const User = () => {
 
     const fetchAddresses = async (userId) => {
         try {
-            const response = await axios.get(`https://books-adda-backend.onrender.com/address/${userId}`);
+            const response = await axios.get(`${API_URL}/api/addresses/${userId}`);
             if (response.status === 200) {
                 setAddresses(response.data);
                 console.log('Addresses fetched:', response.data);
@@ -117,22 +131,21 @@ const User = () => {
             return;
         }
         try {
-            const response = await axios.get(`https://books-adda-backend.onrender.com/username/${userId}`);
+            const response = await axios.get(`${API_URL}/api/users/${userId}`);
             if (response.status === 200) {
                 setUserData(response.data);
                 fetchAddresses(userId);
-            } else {
-                console.error('Failed to fetch user data:', response.status);
             }
         } catch (error) {
             console.error('Error fetching user data:', error);
+            toast.error('Failed to fetch user data');
         }
     };
 
     const handleAddAddress = async (address) => {
         const userId = localStorage.getItem('userId');
         try {
-            const response = await axios.post(`https://books-adda-backend.onrender.com/address/${userId}`);
+            const response = await axios.post(`${API_URL}/api/users/${userId}/addresses`, address);
             if (response.status === 201) {
                 fetchAddresses(userId);
                 Swal.fire('Success', 'Address added successfully', 'success');
@@ -146,7 +159,7 @@ const User = () => {
 
     const handleEditAddress = async (addressId, updatedAddress) => {
         try {
-            const response = await axios.put(`https://books-adda-backend.onrender.com/address/${addressId}`, updatedAddress);
+            const response = await axios.put(`${API_URL}/api/addresses/${addressId}`, updatedAddress);
             if (response.status === 200) {
                 const userId = localStorage.getItem('userId');
                 fetchAddresses(userId);
@@ -161,7 +174,7 @@ const User = () => {
 
     const handleDeleteAddress = async (addressId) => {
         try {
-            const response = await axios.delete(`https://books-adda-backend.onrender.com/address/${addressId}`);
+            const response = await axios.delete(`${API_URL}/api/addresses/${addressId}`);
             if (response.status === 200) {
                 const userId = localStorage.getItem('userId');
                 fetchAddresses(userId);
@@ -179,7 +192,8 @@ const User = () => {
         setSearchTerm(searchTerm);
         const filtered = books.filter(book =>
             book.title.toLowerCase().includes(searchTerm) ||
-            book.author.toLowerCase().includes(searchTerm)
+            book.authorName.toLowerCase().includes(searchTerm) ||
+            book.genre.toLowerCase().includes(searchTerm)
         );
         setFilteredBooks(filtered);
         setCurrentPage(0);
@@ -218,7 +232,7 @@ const User = () => {
                             <h2 class="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                 ${book.title}
                             </h2>
-                            <p class="text-lg text-gray-600 mb-4">by <span class="font-semibold">${book.author}</span></p>
+                            <p class="text-lg text-gray-600 mb-4">by <span class="font-semibold">${book.authorName}</span></p>
                             
                             <div class="flex items-center gap-4 mb-6">
                                 <div class="text-2xl font-bold text-gray-900">₹${book.price}</div>
@@ -312,146 +326,177 @@ const User = () => {
 
     const handleBuy = async (book) => {
         const userId = localStorage.getItem('userId');
-
         if (!userId) {
             navigate('/login');
             return;
         }
 
-        // Fetch the latest addresses before proceeding
-        await fetchAddresses(userId);
-
         try {
-            const { value: copiesAvailable } = await Swal.fire({
-                title: 'Enter number of copies to purchase:',
-                input: 'number',
-                inputValue: 1,
-                inputAttributes: {
-                    min: 1,
-                    max: book.copiesAvailable,
-                    step: 1,
-                },
-                inputValidator: (value) => {
-                    if (!value || value < 1 || value > book.copiesAvailable) {
-                        return 'Please enter a valid number of copies';
+            // First check if user has any addresses
+            const response = await axios.get(`${API_URL}/api/addresses/${userId}`);
+            const userAddresses = response.data;
+
+            if (!userAddresses || userAddresses.length === 0) {
+                Swal.fire({
+                    title: 'No Delivery Address Found',
+                    text: 'Please add a delivery address to continue with your purchase',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Add Address',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate('/myorders');
                     }
-                },
+                });
+                return;
+            }
+
+            // If addresses exist, show address selection dialog
+            const addressOptions = userAddresses.map(addr => ({
+                value: addr.id,
+                text: `${addr.street}, ${addr.landmark}, ${addr.city}, ${addr.state}, ${addr.postalCode}`
+            }));
+
+            const { value: selectedAddressId } = await Swal.fire({
+                title: 'Select Delivery Address',
+                input: 'select',
+                inputOptions: Object.fromEntries(
+                    addressOptions.map(addr => [addr.value, addr.text])
+                ),
+                inputPlaceholder: 'Select an address',
                 showCancelButton: true,
                 confirmButtonText: 'Next',
+                cancelButtonText: 'Add New Address',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Please select an address';
+                    }
+                }
             });
 
-            if (copiesAvailable) {
-                const { value: selectedAddressId } = await Swal.fire({
-                    title: 'Select Address',
-                    input: 'select',
-                    inputOptions: addresses.reduce((options, address) => {
-                        options[address._id] = `${address.street}, ${address.landmark}, ${address.city}, ${address.state}, ${address.postalCode}, ${address.country}`;
-                        return options;
-                    }, {}),
-                    inputPlaceholder: 'Select an address',
+            if (selectedAddressId) {
+                const selectedAddress = userAddresses.find(addr => addr.id === parseInt(selectedAddressId));
+                let quantity = 1;
+                
+                // Show order confirmation dialog with quantity selector
+                const { value: confirmOrder, dismiss: dismissReason } = await Swal.fire({
+                    title: 'Confirm Your Order',
+                    html: `
+                        <div class="p-4">
+                            <div class="flex items-center gap-4 mb-4">
+                                <img src="${book.imageUrl}" alt="${book.title}" class="w-24 h-32 object-cover rounded-lg"/>
+                                <div>
+                                    <h3 class="text-lg font-semibold">${book.title}</h3>
+                                    <p class="text-gray-600">by ${book.authorName}</p>
+                                    <p class="text-blue-600 font-bold">₹${book.price} per book</p>
+                                </div>
+                            </div>
+                            <div class="border-t pt-4">
+                                <h4 class="font-semibold mb-2">Delivery Address:</h4>
+                                <p class="text-gray-600">
+                                    ${selectedAddress.street},<br/>
+                                    ${selectedAddress.landmark},<br/>
+                                    ${selectedAddress.city}, ${selectedAddress.state},<br/>
+                                    ${selectedAddress.postalCode}
+                                </p>
+                            </div>
+                            <div class="border-t border-b py-4 my-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span>Quantity:</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="decrementQuantity()" class="px-3 py-1 bg-gray-200 rounded-lg">-</button>
+                                        <span id="quantity-display">1</span>
+                                        <button onclick="incrementQuantity(${book.copiesAvailable})" class="px-3 py-1 bg-gray-200 rounded-lg">+</button>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between font-bold">
+                                    <span>Total Amount:</span>
+                                    <span id="total-amount">₹${book.price}</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-2">
+                                ${book.copiesAvailable} copies available
+                            </div>
+                        </div>
+                    `,
                     showCancelButton: true,
-                    confirmButtonText: 'Next',
-                    inputValidator: (value) => {
-                        if (!value) {
-                            return 'You need to select an address';
-                        }
+                    confirmButtonText: 'Place Order',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#10B981',
+                    didOpen: () => {
+                        // Add quantity control functions to window
+                        window.incrementQuantity = (maxCopies) => {
+                            if (quantity < maxCopies) {
+                                quantity++;
+                                document.getElementById('quantity-display').textContent = quantity;
+                                document.getElementById('total-amount').textContent = `₹${(quantity * book.price).toFixed(2)}`;
+                            }
+                        };
+                        window.decrementQuantity = () => {
+                            if (quantity > 1) {
+                                quantity--;
+                                document.getElementById('quantity-display').textContent = quantity;
+                                document.getElementById('total-amount').textContent = `₹${(quantity * book.price).toFixed(2)}`;
+                            }
+                        };
                     }
                 });
 
-                if (selectedAddressId) {
-                    const selectedAddress = addresses.find(address => address._id === selectedAddressId);
-
-                    // Show purchase details
-                    const result = await Swal.fire({
-                        title: 'Purchase Details',
-                        html: `
-                            <p><strong>Book:</strong> ${book.title}</p>
-                            <p><strong>Author:</strong> ${book.author}</p>
-                            <p><strong>Price:</strong> ₹${book.price}</p>
-                            <p><strong>Quantity:</strong> ${copiesAvailable}</p>
-                            <p><strong>Total Price:</strong> ₹${book.price * parseInt(copiesAvailable)}</p>
-                            <p><strong>Purchased Date:</strong> ${new Date().toLocaleDateString()}</p>
-                            <hr>
-                            <p><strong>Shipping Address:</strong><br>${selectedAddress.street}, ${selectedAddress.landmark}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.postalCode}, ${selectedAddress.country}</p>
-                        `,
-                        showCancelButton: true,
-                        confirmButtonText: 'Confirm',
-                        cancelButtonText: 'Cancel'
-                    });
-
-                    if (result.isConfirmed) {
-                        const purchaseData = {
-                            userId,
-                            bookTitle: book.title,
-                            bookimageUrl: book.imageUrl,
-                            author: book.author,
-                            price: book.price,
-                            quantity: parseInt(copiesAvailable),
-                            totalPrice: book.price * parseInt(copiesAvailable),
-                            purchasedDate: new Date().toISOString(),
-                            address: selectedAddress,
-                        };
-
-                        const response = await axios.post('https://books-adda-backend.onrender.com/purchase', purchaseData);
-
-                        if (response.status === 201) {
-                            // Remove from favorites if it exists
-                            if (isFavorite(book._id)) {
-                                toggleFavorite(book); // Update context state
-                                const favoriteIds = JSON.parse(localStorage.getItem('favorites')) || [];
-                                const updatedFavoriteIds = favoriteIds.filter(id => id !== book._id);
-                                localStorage.setItem('favorites', JSON.stringify(updatedFavoriteIds));
-                            }
-
-                            Swal.fire({
-                                title: 'Success!',
-                                text: 'Your purchase has been completed successfully.',
-                                icon: 'success',
-                                confirmButtonText: 'OK',
-                            });
-                            fetchBooks();
-
-                        }
-                        const emailParams = {
-                            to_email: userData.email,
-                            book_title: book.title,
-                            book_author: book.author,
-                            quantity: copiesAvailable,
-                            total_price: book.price * parseInt(copiesAvailable),
-                            shipping_address: `${selectedAddress.street}, ${selectedAddress.landmark}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.postalCode}, ${selectedAddress.country}`
-                        };
-
-                        emailjs.send('service_dxwypsr', 'template_7lp5izd', emailParams, 'azBe2gyRVGRab22cR')
-                            .then((response) => {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Check your email for details',
-                                    toast: true,
-                                    position: 'top-end',
-                                    showConfirmButton: false,
-                                    timer: 3000,
-                                    timerProgressBar: true,
-                                    didOpen: (toast) => {
-                                        toast.onmouseenter = Swal.stopTimer;
-                                        toast.onmouseleave = Swal.resumeTimer;
-                                    }
-                                });
-                            })
-                            .catch((error) => {
-                                console.error('Error sending email:', error);
-                            });
-
-                        Swal.fire('Success', 'Book purchased successfully!', 'success');
+                if (confirmOrder) {
+                    // Validate quantity against available copies
+                    if (quantity > book.copiesAvailable) {
+                        toast.error('Selected quantity exceeds available copies');
+                        return;
                     }
-                    else {
-                        Swal.fire('Error!', 'Failed to complete purchase', 'error');
+
+                    // Prepare purchase data according to your model
+                    const purchaseData = {
+                        userId: parseInt(userId),
+                        bookTitle: book.title,
+                        bookimageUrl: book.imageUrl,
+                        author: book.authorName,
+                        price: book.price,
+                        quantity: quantity,
+                        totalPrice: book.price * quantity,
+                        purchasedDate: new Date(),
+                        address: selectedAddress
+                    };
+
+                    // Make the purchase
+                    const purchaseResponse = await axios.post(`${API_URL}/api/purchases`, purchaseData);
+
+                    if (purchaseResponse.status === 201) {
+                        toast.success('Order placed successfully!', {
+                            position: "top-right",
+                            autoClose: 3000,
+                            hideProgressBar: false,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                        });
+
+                        // Refresh books data
+                        fetchBooks();
                     }
                 }
+            } else {
+                // User clicked "Add New Address"
+                navigate('/myorders');
             }
-        }
-        catch (error) {
-            console.error('Error purchasing book:', error);
-            Swal.fire('Error!', 'Failed to complete purchase', 'error');
+
+        } catch (error) {
+            console.error('Error in purchase process:', error);
+            toast.error('Failed to place order. Please try again.', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
         }
     };
 
@@ -473,14 +518,17 @@ const User = () => {
         }
     };
 
-    const indexOfLastBook = (currentPage + 1) * itemsPerPage;
+    const indexOfLastBook = currentPage * itemsPerPage;
     const indexOfFirstBook = indexOfLastBook - itemsPerPage;
     const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+    const pageCount = Math.ceil(filteredBooks.length / itemsPerPage);
 
-    const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
-
-    const handlePageClick = (data) => {
-        setCurrentPage(data.selected);
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value);
+        document.getElementById('books-section').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
     };
 
     const imageUrls = [
@@ -497,14 +545,14 @@ const User = () => {
             userId,
             bookTitle: selectedBook.title,
             bookimageUrl: selectedBook.imageUrl,
-            author: selectedBook.author,
+            author: selectedBook.authorName,
             price: selectedBook.price,
             quantity: copiesAvailable,
             shippingAddress: address,
         };
 
         try {
-            const response = await axios.post('https://books-adda-backend.onrender.com/myorders', purchaseData);
+            const response = await axios.post(`${API_URL}/api/purchases`, purchaseData);
             if (response.status === 201) {
                 Swal.fire('Success!', 'Book purchased successfully', 'success');
             } else {
@@ -547,10 +595,38 @@ const User = () => {
         );
     };
 
+    const theme = createTheme({
+        palette: {
+            primary: {
+                main: '#3B82F6', // Tailwind blue-500
+            },
+        },
+        components: {
+            MuiPagination: {
+                styleOverrides: {
+                    root: {
+                        '& .MuiPaginationItem-root': {
+                            color: '#374151',
+                            '&:hover': {
+                                backgroundColor: '#F3F4F6',
+                            },
+                        },
+                        '& .Mui-selected': {
+                            backgroundColor: '#3B82F6 !important',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: '#2563EB !important',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    });
+
     return (
         <>
             <Navbar />
-            <ToastContainer />
             <div className="container-fluid mx-auto mt-24">
                 <div className="px-4 md:px-8 mb-12">
                     <Carousel
@@ -586,7 +662,7 @@ const User = () => {
                     </Carousel>
                 </div>
 
-                <div className="mt-6 px-8 pb-4">
+                <div className="mt-6 px-8 pb-4" id="books-section">
                     <motion.div 
                         className="text-center mb-12"
                         initial={{ opacity: 0, y: 20 }}
@@ -614,7 +690,7 @@ const User = () => {
                             <input 
                                 type="text" 
                                 className="w-full py-3 px-12 rounded-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 shadow-md" 
-                                placeholder="Search by title or author..." 
+                                placeholder="Search by title, author, or genre..." 
                                 value={searchTerm} 
                                 onChange={handleSearch}
                             />
@@ -686,7 +762,7 @@ const User = () => {
                                                 <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
                                                     {book.genre}
                                                 </span>
-                                                <span className="text-gray-500 text-sm">by {book.author}</span>
+                                                <span className="text-gray-500 text-sm">by {book.authorName}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <div className="flex items-center space-x-2">
@@ -720,26 +796,23 @@ const User = () => {
                             ))
                         )}
                     </div>
-                    <div className="flex justify-end mt-4 mr-5">
-                        {totalPages > 1 && (
-                            <div className="flex justify-center items-center">
-                                <ReactPaginate
-                                    pageCount={totalPages}
-                                    onPageChange={handlePageClick}
-                                    containerClassName="flex items-center space-x-2"
-                                    activeClassName="font-bold"
-                                    previousLabel={<MdArrowBackIos />}
-                                    nextLabel={<MdArrowForwardIos />}
-                                    previousClassName="px-2 py-1 rounded text-black text-lg"
-                                    nextClassName="px-2 py-1 rounded text-black text-lg"
-                                    disabledClassName="opacity-50 cursor-not-allowed"
-                                    pageClassName="px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
-                                    breakClassName="px-2 py-1"
-                                    activeLinkClassName="font-bold"
+                    {!loading && pageCount > 1 && (
+                        <ThemeProvider theme={theme}>
+                            <Stack spacing={2} className="flex justify-center my-8">
+                                <Pagination 
+                                    count={pageCount}
+                                    page={currentPage}
+                                    onChange={handlePageChange}
+                                    color="primary"
+                                    size={paginationSize}
+                                    showFirstButton 
+                                    showLastButton
+                                    siblingCount={window.innerWidth < 640 ? 0 : 1}
+                                    boundaryCount={window.innerWidth < 640 ? 0 : 1}
                                 />
-                            </div>
-                        )}
-                    </div>
+                            </Stack>
+                        </ThemeProvider>
+                    )}
                 </div>
                 <Services />
                 <Gallery />

@@ -5,6 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import NavBar from '../Navbar/Navbar_admin';
 import UserStats from './charts/user_charts';
+import axios from 'axios';
+import API_URL from '../../api';
 
 const Admin = () => {
     const [loginData, setLoginData] = useState([]);
@@ -17,7 +19,7 @@ const Admin = () => {
 
     const fetchLoginData = async () => {
         try {
-            const response = await fetch('https://books-adda-backend.onrender.com/login-times');
+            const response = await axios.get(`${API_URL}/api/users/login-times`);
             const data = await response.json();
             setLoginData(data);
         } catch (error) {
@@ -43,40 +45,18 @@ const Admin = () => {
     };
 
     const handleSave = async (userId) => {
-        Swal.fire({
-            title: "Do you want to save the changes?",
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: "Save",
-            denyButtonText: `Don't save`
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    await fetch(`https://books-adda-backend.onrender.com/users/${userId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(editValues),
-                    });
-                    setEditUser(null);
-                    fetchLoginData();
-                    Swal.fire("Saved!", "", "success");
-                } catch (error) {
-                    console.error('Error saving user data:', error);
-                }
-            } else if (result.isDenied) {
-                Swal.fire("Changes are not saved", "", "info");
-                setEditUser(null);
-            }
-        });
+        try {
+            await axios.put(`${API_URL}/api/users/${userId}`, editValues);
+            setEditUser(null);
+            fetchLoginData();
+        } catch (error) {
+            console.error('Error saving user data:', error);
+        }
     };
 
     const handleDelete = async (userId) => {
         try {
-            await fetch(`https://books-adda-backend.onrender.com/users/${userId}`, {
-                method: 'DELETE',
-            });
+            await axios.delete(`${API_URL}/api/users/${userId}`);
             fetchLoginData();
         } catch (error) {
             console.error('Error deleting user:', error);

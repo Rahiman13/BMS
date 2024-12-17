@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../../api';
 
 const EnquiryComponent = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -10,7 +11,7 @@ const EnquiryComponent = () => {
     // Fetch enquiries on component mount
     const fetchEnquiries = async () => {
       try {
-        const response = await axios.get(`https://books-adda-backend.onrender.com/api/${userId}/enquiry`);
+        const response = await axios.get(`${API_URL}/api/${userId}/enquiry`);
         setEnquiries(response.data);
       } catch (err) {
         console.error('Error fetching enquiries:', err);
@@ -22,7 +23,7 @@ const EnquiryComponent = () => {
 
   const handleAddEnquiry = async () => {
     try {
-      const response = await axios.post(`https://books-adda-backend.onrender.com/api/${userId}/enquiry`, { message });
+      const response = await axios.post(`${API_URL}/api/${userId}/enquiry`, { message });
       setEnquiries(response.data.enquiries);
       setMessage('');
     } catch (err) {

@@ -5,6 +5,8 @@ import { FavoritesContext } from '../pages/Favourite/FavoritesContext';
 import links from '../NavLinks/links';
 import FeedbackModal from './Feedbackmodal';
 import Logo from '../Dasboard/logo';
+import API_URL from '../../api';
+import axios from 'axios';
 
 const NavBar = () => {
   const [open, setOpen] = useState(false);
@@ -25,15 +27,15 @@ const NavBar = () => {
     }
   }, [userId]);
 
-  const fetchUsername = async (userId) => {
+  const fetchUsername = async () => {
     try {
-      const response = await fetch(`https://books-adda-backend.onrender.com/username/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      const data = await response.json();
-      setUsername(data.username);
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      
+      const response = await axios.get(`${API_URL}/api/users/${userId}`);
+      if (response.status === 200) {
+        setUsername(response.data.username);
+      }
     } catch (error) {
       console.error('Error fetching username:', error);
     }
@@ -42,7 +44,7 @@ const NavBar = () => {
 
   const handleLogoutConfirm = async () => {
     try {
-      const response = await fetch('https://books-adda-backend.onrender.com/logout', {
+      const response = await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

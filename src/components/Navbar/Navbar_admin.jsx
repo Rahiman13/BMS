@@ -4,6 +4,7 @@ import { AuthContext } from './AuthContext';
 import { FavoritesContext } from '../pages/Favourite/FavoritesContext';
 import links from '../NavLinks/links_admin';
 import { FaBars } from 'react-icons/fa';
+import API_URL from '../../api';
 
 const Navbar_admin = () => {
   const [open, setOpen] = useState(false);
@@ -22,7 +23,7 @@ const Navbar_admin = () => {
 
   const fetchUsername = async (userId) => {
     try {
-      const response = await fetch(`https://books-adda-backend.onrender.com/username/${userId}`, {
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
@@ -40,7 +41,7 @@ const Navbar_admin = () => {
 
   const handleLogoutConfirm = async () => {
     try {
-      const response = await fetch('https://books-adda-backend.onrender.com/logout', {
+      const response = await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,36 +71,39 @@ const Navbar_admin = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row">
-      <button onClick={toggleSidebar} className="lg:hidden p-4">
+    <div className="flex flex-col lg:flex-row min-h-screen">
+      <button onClick={toggleSidebar} className="lg:hidden p-4 fixed top-4 left-4 z-50 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all duration-300">
         <FaBars className="text-white" size={24} />
       </button>
-      <nav className={`bg-white dark:bg-[#000080] lg:w-1/6 px-4 flex flex-col items-start justify-between fixed h-full border-r border-gray-200 dark:border-gray-600 z-10 w-full md:w-1/3 sm:w-1/2 transform ${open ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0`}>
+      <nav className={`bg-gradient-to-b from-[#000080] to-[#000055] lg:w-72 px-6 flex flex-col items-start justify-between fixed h-full border-r border-white/10 z-40 w-full md:w-80 transform ${open ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 ease-in-out lg:translate-x-0 backdrop-blur-md`}>
         <div className="flex flex-col items-center w-full">
-          <div className="p-4 w-full">
-            {/* <h1 className="text-3xl font-cursive text-white font-bold">Admin</h1> */}
+          <div className="p-6 w-full border-b border-white/10">
             {isLoggedIn && (
-              <p className="text-2xl font-semibold text-white mt-2">Welcome, <span className='font-cursive text-3xl'>{username}</span></p>
+              <div className="text-white">
+                <p className="text-sm uppercase tracking-wider opacity-70">Welcome back</p>
+                <p className="text-2xl font-semibold mt-1">
+                  <span className='font-cursive text-3xl bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent'>{username}</span>
+                </p>
+              </div>
             )}
           </div>
-          <ul className="w-full mt-4 space-y-4">
+          <ul className="w-full mt-8 space-y-2">
             {links.map((link, index) => (
-              <li key={index} className="w-full">
+              <li key={index} className="w-full px-2">
                 <NavLink
                   to={link.path}
                   className={({ isActive }) => 
-                    `flex items-center pl-2 text-center justify-center lg:justify-start py-2 font-semibold w-full text-gray-900 rounded text-lg ${
+                    `flex items-center px-4 py-3 rounded-xl transition-all duration-300 ${
                       isActive
-                        ? "bg-gray-700 text-blue-700 dark:bg-white dark:text-[#000080]"
-                        : "hover:bg-gray-700 md:hover:bg-transparent md:hover:text-blue-700 dark:text-white dark:hover:bg-white dark:hover:text-[#000080]"
+                        ? "bg-white text-[#000080] shadow-lg shadow-white/10"
+                        : "text-white hover:bg-white/10"
                     }`
                   }
-                  
                 >
-                  {link.icon}
-                  <span className="ml-2">{link.name}</span>
-                  {link.name === 'Favourites' && (
-                    <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                  <span className="text-xl">{link.icon}</span>
+                  <span className="ml-3 font-medium">{link.name}</span>
+                  {link.name === 'Favourites' && favorites.length > 0 && (
+                    <span className="ml-auto bg-red-500 text-white rounded-full px-2.5 py-0.5 text-xs font-bold">
                       {favorites.length}
                     </span>
                   )}
@@ -108,45 +112,48 @@ const Navbar_admin = () => {
             ))}
           </ul>
         </div>
-        <div className="w-full p-4">
+        <div className="w-full p-6">
           {isLoggedIn ? (
             <button
               onClick={handleLogout}
-              className="w-full text-blue-700 bg-transparent hover:bg-[#000] focus:ring-4 focus:outline-none focus:ring-blue-300 font-semibold rounded-lg text-lg px-4 py-2 text-center dark:bg-white dark:hover:text-white dark:hover:bg-[#000] dark:hover:border border-white dark:focus:ring-blue-800"
+              className="w-full bg-white/10 text-white hover:bg-white hover:text-[#000080] transition-all duration-300 font-medium rounded-xl px-4 py-3 text-center backdrop-blur-sm border border-white/20 hover:border-white"
             >
               Logout
             </button>
           ) : (
             <NavLink
               to="/login"
-              className="w-full text-blue-700 bg-transparent hover:bg-[#000] focus:ring-4 focus:outline-none focus:ring-blue-300 font-semibold rounded-lg text-lg px-4 py-2 text-center dark:bg-white dark:hover:text-white dark:hover:bg-[#000] dark:hover:border border-white dark:focus:ring-blue-800"
+              className="w-full bg-white/10 text-white hover:bg-white hover:text-[#000080] transition-all duration-300 font-medium rounded-xl px-4 py-3 text-center backdrop-blur-sm border border-white/20 hover:border-white"
             >
               Login
             </NavLink>
           )}
         </div>
       </nav>
-      <div className="flex-1 lg:ml-64 pt-20 lg:pt-0">
+      <div className="flex-1 lg:ml-72 pt-20 lg:pt-0">
         {/* Main content goes here */}
       </div>
       {showLogoutModal && (
-        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded-lg shadow-md">
-            <p className="text-lg font-semibold mb-4">Are you sure you want to logout, <span className="font-bold text-2xl font-cursive">{username}</span>?</p>
-            <div className="flex justify-end">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all">
+            <p className="text-xl text-gray-800 mb-6">
+              Are you sure you want to logout, {' '}
+              <span className="font-cursive text-2xl text-[#000080]">{username}</span>?
+            </p>
+            <div className="flex justify-end space-x-4">
               <NavLink to="/login">
                 <button
                   onClick={handleLogoutConfirm}
-                  className="mr-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  className="px-6 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors duration-300 font-medium"
                 >
-                  Yes
+                  Logout
                 </button>
               </NavLink>
               <button
                 onClick={handleLogoutCancel}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-medium"
               >
-                No
+                Cancel
               </button>
             </div>
           </div>

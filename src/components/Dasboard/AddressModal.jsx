@@ -18,7 +18,7 @@ const AddressModal = ({ isOpen, addresses, onSelect, onRequestClose }) => {
                 ) : (
                     <ul>
                         {addresses.map((address) => (
-                            <li key={address._id} className="border-b py-2 cursor-pointer" onClick={() => onSelect(address)}>
+                            <li key={address.id || `address-${address.street}`} className="address-item">
                                 <p>{address.street}, {address.landmark}, {address.city}, {address.state}, {address.postalCode}, {address.country}</p>
                             </li>
                         ))}

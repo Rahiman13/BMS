@@ -33,6 +33,11 @@ function HexagonImageGallery() {
       name: 'Ernest Hemingway',
       info: 'Ernest Hemingway was an American novelist, short-story writer, and journalist. His economical and understated style had a strong influence on 20th-century fiction.',
     },
+    FyodorDostoevsky: {
+      name: 'Fyodor Dostoevsky',
+      info: 'Fyodor Dostoevsky was a Russian novelist, short-story writer, and journalist. He is considered one of the greatest novelists in the Russian language.',
+    },
+
   };
 
   const handleImageClick = (authorKey) => {
@@ -94,6 +99,12 @@ function HexagonImageGallery() {
               <img
                 src="https://media.gettyimages.com/id/145459445/photo/kenya-author-ernest-hemingway-poses-for-a-portrait-while-on-a-big-game-hunt-in-september-1952.jpg?s=612x612&w=0&k=20&c=yFhNVfq8KsnIygNpvncFzpXrc8PGafaQSC9FJK0kOYk="
                 alt="Ernest Hemingway"
+              />
+            </div>
+            <div className="hexagon side-image bottom-right" onClick={() => handleImageClick('ernestHemingway')}>
+              <img
+                src="https://m.media-amazon.com/images/M/MV5BYTExYTljMGYtN2Y5ZS00Yzg2LTgwYjItNWMyNTZkYjViNjFmXkEyXkFqcGc@._V1_QL75_UX187.5_.jpg"
+                alt="Fyodor Dostoevsky"
               />
             </div>
           </div>

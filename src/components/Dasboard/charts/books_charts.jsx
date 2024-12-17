@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Doughnut, Bar } from 'react-chartjs-2';
+import API_URL from '../../../api';
 
 const ChartsComponent = () => {
     const [chartData, setChartData] = useState(null);
@@ -12,7 +13,7 @@ const ChartsComponent = () => {
 
     const fetchDataFromBackend = async () => {
         try {
-            const response = await axios.get('https://books-adda-backend.onrender.com/books'); // Assuming your backend is running on the same host/port
+            const response = await axios.get(`${API_URL}/books`); // Assuming your backend is running on the same host/port
             const booksData = response.data;
 
             // Process data for charts
